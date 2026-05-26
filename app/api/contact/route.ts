@@ -7,17 +7,51 @@ const supabase = createClient(
 );
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  try {
+    const body = await req.json();
 
-  const { name, email, business, message } = body;
+    const { name, email, business, message } = body;
 
-  const { error } = await supabase.from("leads").insert([
-    { name, email, business, message },
-  ]);
+    if (!name || !email || !message) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const { error } = await supabase
+      .from("leads")
+      .insert([
+        {
+          name,
+          email,
+          business,
+          message,
+        },
+      ]);
+
+    if (error) {
+      console.error(error);
+
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Lead saved successfully",
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ success: true });
 }
